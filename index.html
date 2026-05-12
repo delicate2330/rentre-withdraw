@@ -295,7 +295,16 @@
         <div class="reason-item" onclick="toggleReason(this)">
           <div class="reason-header">
             <div class="checkbox"><span class="checkbox-check">✓</span></div>
-            <span class="reason-label">앱 서비스 오류가 자주 발생해요.</span>
+            <span class="reason-label">알림이 너무 많이 와요.</span>
+          </div>
+          <div class="reason-guide hidden">
+            <p>앱 설정 > 알림에서 원하시는 알림만 선택적으로 받아보실 수 있어요. 탈퇴 전에 알림 설정을 조정해보시는 건 어떠세요?</p>
+          </div>
+        </div>
+        <div class="reason-item" onclick="toggleReason(this)">
+          <div class="reason-header">
+            <div class="checkbox"><span class="checkbox-check">✓</span></div>
+            <span class="reason-label">서비스 오류가 자주 발생해요.</span>
           </div>
           <div class="reason-guide hidden">
             <p>이용 중 불편을 드려 죄송합니다. 해결이 어려우신 문제가 있다면 <a href="https://rentre.channel.io/home">고객센터</a>로 문의해주세요.</p>
@@ -344,15 +353,15 @@
 
       <div class="field-group">
         <div class="field-label"><span class="required-dot"></span> 이름</div>
-        <input class="field-input" type="text" placeholder="이름을 입력해주세요" oninput="checkAuth()">
+        <input class="field-input" id="auth-name" type="text" placeholder="이름을 입력해주세요" oninput="checkAuth()">
       </div>
       <div class="field-group">
         <div class="field-label"><span class="required-dot"></span> 주민등록번호</div>
         <div class="field-row">
-          <input class="field-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="앞 6자리" maxlength="6" oninput="this.value=this.value.replace(/\D/g,''); checkAuth()">
+          <input class="field-input" id="auth-id-front" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="앞 6자리" maxlength="6" oninput="this.value=this.value.replace(/\D/g,''); checkAuth()">
           <span class="dash">–</span>
           <div class="id-back-wrap">
-            <input class="id-back-first" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" placeholder="0" oninput="this.value=this.value.replace(/\D/g,''); checkAuth()">
+            <input class="id-back-first" id="auth-id-back" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" placeholder="0" oninput="this.value=this.value.replace(/\D/g,''); checkAuth()">
             <span class="id-back-dots">●●●●●●</span>
           </div>
         </div>
@@ -360,20 +369,21 @@
       <div class="field-group">
         <div class="field-label"><span class="required-dot"></span> 휴대전화번호</div>
         <div class="field-row" style="gap:8px;">
-          <input class="field-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="01012345678" maxlength="11" style="flex:1" oninput="this.value=this.value.replace(/\D/g,''); checkAuth()">
-          <button class="btn btn-primary" style="width:96px;height:52px;font-size:14px;" onclick="sendSMS()">인증 요청</button>
+          <input class="field-input" id="auth-phone" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="01012345678" maxlength="11" style="flex:1" oninput="this.value=this.value.replace(/\D/g,''); checkAuth()">
+          <button class="btn btn-primary" id="btn-send-sms" style="width:96px;height:52px;font-size:14px;" disabled onclick="sendSMS()">인증 요청</button>
         </div>
       </div>
       <div class="field-group" id="sms-field" style="display:none;">
         <div class="field-label">인증번호</div>
         <div class="field-row" style="align-items:center;">
-          <input class="field-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="인증번호 6자리" maxlength="6" oninput="this.value=this.value.replace(/\D/g,''); checkAuth()">
+          <input class="field-input" id="sms-code-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="인증번호 6자리" maxlength="6" oninput="this.value=this.value.replace(/\D/g,''); this.style.borderColor=''; document.getElementById('sms-error').style.display='none'; checkAuth()">
           <span id="sms-timer" style="font-size:13px;color:#FF4B4B;white-space:nowrap;padding-left:10px;">03:00</span>
         </div>
+        <p id="sms-error" style="display:none;font-size:13px;color:var(--red);margin-top:6px;">인증번호를 다시 한번 확인해주세요.</p>
       </div>
     </div>
     <div class="bottom-area">
-      <button class="btn btn-primary" id="btn-next-3" disabled onclick="go(4)">탈퇴하기</button>
+      <button class="btn btn-primary" id="btn-next-3" disabled onclick="verifyAndGo()">탈퇴하기</button>
       <button class="btn btn-secondary" onclick="go(2)">뒤로가기</button>
     </div>
   </div>
@@ -454,8 +464,24 @@
   }
 
   // 본인인증
+  function checkAuth() {
+    const name = document.getElementById('auth-name').value.trim();
+    const idFront = document.getElementById('auth-id-front').value.trim();
+    const idBack = document.getElementById('auth-id-back').value.trim();
+    const phone = document.getElementById('auth-phone').value.trim();
+    const allFilled = name.length > 0 && idFront.length === 6 && idBack.length === 1 && phone.length === 11;
+    document.getElementById('btn-send-sms').disabled = !allFilled;
+
+    const smsVisible = document.getElementById('sms-field').style.display !== 'none';
+    const smsCode = document.getElementById('sms-code-input').value.trim();
+    document.getElementById('btn-next-3').disabled = !(smsVisible && smsCode.length === 6);
+  }
+
   function sendSMS() {
     document.getElementById('sms-field').style.display = 'block';
+    document.getElementById('sms-error').style.display = 'none';
+    document.getElementById('sms-code-input').value = '';
+    document.getElementById('btn-next-3').disabled = true;
     let sec = 180;
     const timer = document.getElementById('sms-timer');
     clearInterval(window._smsTimer);
@@ -464,15 +490,21 @@
       const m = String(Math.floor(sec/60)).padStart(2,'0');
       const s = String(sec%60).padStart(2,'0');
       timer.textContent = m + ':' + s;
-      if(sec <= 0) clearInterval(window._smsTimer);
+      if (sec <= 0) clearInterval(window._smsTimer);
     }, 1000);
   }
 
-  function checkAuth() {
-    const smsVisible = document.getElementById('sms-field').style.display !== 'none';
-    const smsInput = document.querySelector('#sms-field input');
-    const smsFilled = smsVisible && smsInput && smsInput.value.trim().length >= 6;
-    document.getElementById('btn-next-3').disabled = !smsFilled;
+  function verifyAndGo() {
+    const code = document.getElementById('sms-code-input').value.trim();
+    const errorEl = document.getElementById('sms-error');
+    // 프로토타입: 000000은 오류, 그 외 6자리는 통과
+    if (code === '000000') {
+      errorEl.style.display = 'block';
+      document.getElementById('sms-code-input').style.borderColor = 'var(--red)';
+    } else {
+      errorEl.style.display = 'none';
+      go(4);
+    }
   }
 </script>
 </body>
