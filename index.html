@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>렌트리 - 회원탈퇴</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    --blue: #3531ff;
+    --blue-light: #eeeeff;
+    --blue-mid: #d0cfff;
+    --text: #262624;
+    --text-sub: #6b6b69;
+    --text-hint: #babab7;
+    --border: #e5e5e3;
+    --bg: #f9f9fb;
+    --disabled-bg: #babab7;
+    --disabled-text: #ebebe9;
+    --red: #e53935;
+    --red-light: #fff5f5;
+    --red-border: #ffd0d0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', -apple-system, sans-serif; background: #ebebeb; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 24px 0; }
+
+  .device { width: 390px; min-height: 844px; background: #fff; border-radius: 40px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.15); display: flex; flex-direction: column; }
+
+  /* Top bar */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 56px 20px 12px; background: #fff; border-bottom: 1px solid var(--bg); flex-shrink: 0; }
+  .topbar-title { font-size: 17px; font-weight: 600; color: var(--text); }
+  .topbar .back-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 8px; }
+  .topbar .back-btn:active { background: var(--bg); }
+  .topbar-right { width: 40px; }
+
+  .screen { display: none; flex-direction: column; flex: 1; }
+  .screen.active { display: flex; }
+  .scroll-area { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
+  .scroll-area::-webkit-scrollbar { display: none; }
+
+  /* Bottom area */
+  .bottom-area { background: #fff; padding: 12px 20px 34px; border-top: 1px solid var(--bg); display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+
+  /* Buttons */
+  .btn { width: 100%; height: 52px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; font-family: inherit; }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-primary:disabled { background: var(--disabled-bg); color: var(--disabled-text); cursor: not-allowed; }
+  .btn-primary:not(:disabled):active { opacity: 0.85; }
+  .btn-secondary { background: var(--bg); color: var(--text-sub); }
+  .btn-secondary:active { opacity: 0.7; }
+
+  /* Screen 0 */
+  .profile-section { padding: 20px; border-bottom: 8px solid var(--bg); }
+  .profile-name { font-size: 18px; font-weight: 700; color: var(--text); }
+  .profile-email { font-size: 13px; color: var(--text-sub); margin-top: 4px; }
+  .menu-group { padding: 8px 0; border-bottom: 8px solid var(--bg); }
+  .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; }
+  .menu-item:active { background: var(--bg); }
+  .menu-item-label { font-size: 15px; color: var(--text); }
+  .menu-item-sub { font-size: 13px; color: var(--text-sub); }
+  .menu-item-arrow { color: var(--text-hint); font-size: 18px; }
+
+  /* Section title */
+  .section-title { font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.45; margin-bottom: 24px; }
+
+  /* Progress bar */
+  .progress-bar { display: flex; align-items: center; padding: 12px 20px 0; gap: 6px; flex-shrink: 0; }
+  .progress-step { flex: 1; height: 3px; border-radius: 99px; background: var(--border); transition: background 0.3s; }
+  .progress-step.active { background: var(--blue); }
+
+  /* Reason list */
+  .reason-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 24px; }
+  .reason-item { border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color 0.15s; }
+  .reason-item.checked { border-color: var(--blue); }
+  .reason-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+  .checkbox { width: 22px; height: 22px; border: 2px solid var(--text-hint); border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .reason-item.checked .checkbox,
+  .confirm-row.checked .checkbox { background: var(--blue); border-color: var(--blue); }
+  .checkbox-check { display: none; color: #fff; font-size: 12px; font-weight: 800; }
+  .reason-item.checked .checkbox-check,
+  .confirm-row.checked .checkbox-check { display: block; }
+  .reason-label { font-size: 15px; color: var(--text); flex: 1; }
+  .reason-guide { background: var(--blue-light); padding: 12px 16px 14px; border-top: 1px solid var(--blue-mid); }
+  .reason-guide p { font-size: 13px; color: #3d3caa; line-height: 1.6; }
+  .reason-guide a { color: var(--blue); }
+  .reason-guide.hidden { display: none; }
+
+  /* 기타 textarea */
+  .etc-input { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; resize: none; height: 80px; font-family: inherit; outline: none; }
+  .etc-input:focus { border-color: var(--blue); }
+
+  /* 필수확인 label */
+  .required-section-label { font-size: 13px; font-weight: 600; color: var(--red); margin-bottom: 8px; }
+
+  /* Warning box */
+  .warning-box { background: var(--red-light); border: 1.5px solid var(--red-border); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+  .warning-item { display: flex; gap: 8px; font-size: 13px; color: var(--red); line-height: 1.5; }
+  .warning-item + .warning-item { margin-top: 8px; }
+
+  /* Confirm */
+  .confirm-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; cursor: pointer; }
+  .confirm-label { font-size: 14px; color: var(--text-sub); line-height: 1.4; flex: 1; }
+
+  /* Input field */
+  .field-group { margin-bottom: 16px; }
+  .field-label { font-size: 13px; color: var(--text-sub); font-weight: 500; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+  .required-dot { width: 5px; height: 5px; background: var(--blue); border-radius: 50%; display: inline-block; }
+  .field-input { width: 100%; height: 52px; border: 1.5px solid var(--border); border-radius: 12px; padding: 0 16px; font-size: 15px; color: var(--text); outline: none; transition: border-color 0.15s; font-family: inherit; background: #fff; }
+  .field-input:focus { border-color: var(--blue); }
+  .field-input::placeholder { color: var(--text-hint); }
+  .field-row { display: flex; gap: 8px; align-items: center; }
+  .field-row .field-input { flex: 1; }
+  .dash { font-size: 18px; color: var(--text-hint); }
+
+  /* 주민번호 뒤자리 */
+  .id-back-wrap { flex: 1; height: 52px; border: 1.5px solid var(--border); border-radius: 12px; padding: 0 14px; display: flex; align-items: center; gap: 2px; transition: border-color 0.15s; }
+  .id-back-wrap:focus-within { border-color: var(--blue); }
+  .id-back-first { width: 16px; font-size: 15px; border: none; outline: none; background: transparent; font-family: inherit; color: var(--text); }
+  .id-back-dots { font-size: 11px; color: var(--text-hint); letter-spacing: 2px; }
+
+  /* Complete screen */
+  .complete-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 28px 20px; text-align: center; }
+  .complete-graphic { position: relative; margin-bottom: 32px; }
+  .complete-circle { width: 120px; height: 120px; background: var(--blue-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .complete-circle svg { width: 56px; height: 56px; }
+  .complete-badge { position: absolute; bottom: -4px; right: -4px; width: 36px; height: 36px; background: #fff; border-radius: 50%; border: 2px solid var(--blue-light); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .complete-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+  .complete-desc { font-size: 15px; color: var(--text-sub); line-height: 1.7; margin-bottom: 32px; }
+  .complete-divider { width: 100%; height: 1px; background: var(--bg); margin-bottom: 20px; }
+  .complete-info { background: var(--bg); border-radius: 12px; padding: 16px; width: 100%; text-align: left; }
+  .complete-info-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-sub); }
+  .complete-info-item + .complete-info-item { margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="device">
+
+  <!-- Screen 0: 더보기 -->
+  <div class="screen active" id="screen-0">
+    <div class="topbar">
+      <div style="width:40px"></div>
+      <span class="topbar-title">더보기</span>
+      <div class="topbar-right"></div>
+    </div>
+    <div class="more-menu scroll-area" style="padding:0; padding-bottom:0;">
+      <div class="profile-section">
+        <div class="profile-name">김렌트리</div>
+        <div class="profile-email">katie@rentre.kr</div>
+      </div>
+      <div class="menu-group">
+        <div class="menu-item">
+          <span class="menu-item-label">공지사항</span>
+          <span class="menu-item-arrow">›</span>
+        </div>
+        <div class="menu-item">
+          <span class="menu-item-label">고객센터</span>
+          <span class="menu-item-arrow">›</span>
+        </div>
+        <div class="menu-item">
+          <span class="menu-item-label">앱 버전</span>
+          <span class="menu-item-sub">3.2.1</span>
+        </div>
+      </div>
+      <div class="menu-group">
+        <div class="menu-item" onclick="go(1)">
+          <span class="menu-item-label" style="color:#4A5568;">계정 관리 · <span style="color:#FF4B4B; font-size:14px;">회원탈퇴</span></span>
+          <span class="menu-item-arrow">›</span>
+        </div>
+        <div class="menu-item">
+          <span class="menu-item-label">로그아웃</span>
+          <span class="menu-item-arrow">›</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 1: 탈퇴 사유 -->
+  <div class="screen" id="screen-1">
+    <div class="topbar">
+      <div class="back-btn" onclick="go(0)">
+        <svg width="10" height="18" viewBox="0 0 10 18" fill="none"><path d="M9 1L1 9L9 17" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="topbar-title">회원탈퇴</span>
+      <div class="topbar-right"></div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-step active"></div>
+      <div class="progress-step"></div>
+    </div>
+    <div class="scroll-area">
+      <p class="section-title">김렌트리님,<br>떠나시는 이유를 알려주세요. 🥲<br><span style="font-size:14px;font-weight:400;color:#767676;">* 필수, 복수 선택 가능</span></p>
+
+      <div class="reason-list" id="reason-list">
+        <div class="reason-item" data-id="0" onclick="toggleReason(this)">
+          <div class="reason-header">
+            <div class="checkbox"><span class="checkbox-check">✓</span></div>
+            <span class="reason-label">이용 빈도가 낮아요</span>
+          </div>
+          <div class="reason-guide hidden">
+            <p>지금 바로 이용 계획이 없으시다면, 필요하실 때 다시 찾아주셔도 괜찮아요. 렌트리는 언제든 다시 이용하실 수 있어요.</p>
+          </div>
+        </div>
+        <div class="reason-item" data-id="1" onclick="toggleReason(this)">
+          <div class="reason-header">
+            <div class="checkbox"><span class="checkbox-check">✓</span></div>
+            <span class="reason-label">렌탈을 완료했어요</span>
+          </div>
+          <div class="reason-guide hidden">
+            <p>고객님의 계약 및 이용 내역은 렌트리에서 계속 확인하실 수 있어요. 계정을 유지해보시는 건 어떠실까요?</p>
+          </div>
+        </div>
+        <div class="reason-item" data-id="2" onclick="toggleReason(this)">
+          <div class="reason-header">
+            <div class="checkbox"><span class="checkbox-check">✓</span></div>
+            <span class="reason-label">원하는 상품이 없어요</span>
+          </div>
+          <div class="reason-guide hidden">
+            <p>찾으시는 상품이 없어 아쉬우셨겠어요. 원하시는 상품이 있다면 <a href="#">의견</a>을 남겨주세요.</p>
+          </div>
+        </div>
+        <div class="reason-item" data-id="3" onclick="toggleReason(this)">
+          <div class="reason-header">
+            <div class="checkbox"><span class="checkbox-check">✓</span></div>
+            <span class="reason-label">상담 과정이 불편했어요</span>
+          </div>
+          <div class="reason-guide hidden">
+            <p>상담 과정에서 불편을 드려 죄송합니다. 남겨주신 의견은 서비스 개선에 적극 반영하겠습니다. (<a href="#">채널톡 바로가기</a>)</p>
+          </div>
+        </div>
+        <div class="reason-item" data-id="4" onclick="toggleReason(this)">
+          <div class="reason-header">
+            <div class="checkbox"><span class="checkbox-check">✓</span></div>
+            <span class="reason-label">앱 서비스 오류가 자주 발생해요</span>
+          </div>
+          <div class="reason-guide hidden">
+            <p>이용 중 불편을 드려 죄송합니다. 해결이 어려우신 문제는 <a href="#">고객센터</a>로 문의해주세요.</p>
+          </div>
+        </div>
+        <div class="reason-item" data-id="5" onclick="toggleReason(this)">
+          <div class="reason-header">
+            <div class="checkbox"><span class="checkbox-check">✓</span></div>
+            <span class="reason-label">개인정보 보호가 필요해요</span>
+          </div>
+          <div class="reason-guide hidden">
+            <p>고객님의 개인정보는 관련 법령에 따라 안전하게 관리되고 있어요.</p>
+          </div>
+        </div>
+        <div class="reason-item" data-id="6" onclick="toggleReason(this)">
+          <div class="reason-header">
+            <div class="checkbox"><span class="checkbox-check">✓</span></div>
+            <span class="reason-label">다른 서비스를 이용하려 해요</span>
+          </div>
+          <div class="reason-guide hidden">
+            <p>타사의 좋은 혜택을 가져오시면 해당 금액에 +2만원을 추가 지급하고 있어요!</p>
+          </div>
+        </div>
+        <div class="reason-item" data-id="7" onclick="toggleReason(this)">
+          <div class="reason-header">
+            <div class="checkbox"><span class="checkbox-check">✓</span></div>
+            <span class="reason-label">기타</span>
+          </div>
+          <div class="reason-guide hidden" onclick="event.stopPropagation()">
+            <textarea class="etc-input" placeholder="불편하셨던 점을 자유롭게 적어주세요."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="required-section-label">⚠ 필수 확인</div>
+      <div class="warning-box">
+        <div class="warning-item">🚨 <span>진행 중인 렌탈 계약 및 견적 내역은 탈퇴 후 모두 삭제되며 복구되지 않습니다.</span></div>
+        <div class="warning-item">🚨 <span>탈퇴 후 30일 동안 재가입이 제한됩니다.</span></div>
+      </div>
+
+      <div class="confirm-row" id="confirm-check" onclick="toggleConfirm()">
+        <div class="checkbox"><span class="checkbox-check">✓</span></div>
+        <span class="confirm-label">위 내용을 모두 확인하였으며, 탈퇴를 진행합니다.</span>
+      </div>
+    </div>
+    <div class="bottom-area">
+      <button class="btn btn-primary" id="btn-next-1" disabled onclick="go(2)">다음</button>
+      <button class="btn btn-secondary" onclick="go(0)">뒤로가기</button>
+    </div>
+  </div>
+
+  <!-- Screen 2: 본인인증 -->
+  <div class="screen" id="screen-2">
+    <div class="topbar">
+      <div class="back-btn" onclick="go(1)">
+        <svg width="10" height="18" viewBox="0 0 10 18" fill="none"><path d="M9 1L1 9L9 17" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="topbar-title">본인인증</span>
+      <div class="topbar-right"></div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-step active"></div>
+      <div class="progress-step active"></div>
+    </div>
+    <div class="scroll-area">
+      <p class="section-title">탈퇴 진행을 위한<br>정보를 입력해주세요.</p>
+
+      <div class="field-group">
+        <div class="field-label"><span class="required-dot"></span> 이름</div>
+        <input class="field-input" type="text" placeholder="이름을 입력해주세요" oninput="checkAuth()">
+      </div>
+      <div class="field-group">
+        <div class="field-label"><span class="required-dot"></span> 주민등록번호</div>
+        <div class="field-row">
+          <input class="field-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="앞 6자리" maxlength="6" oninput="this.value=this.value.replace(/\D/g,''); checkAuth()">
+          <span class="dash">–</span>
+          <div class="id-back-wrap">
+            <input class="id-back-first" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" placeholder="0" oninput="this.value=this.value.replace(/\D/g,''); checkAuth()">
+            <span class="id-back-dots">●●●●●●</span>
+          </div>
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label"><span class="required-dot"></span> 휴대전화번호</div>
+        <div class="field-row" style="gap:8px;">
+          <input class="field-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="01012345678" maxlength="11" style="flex:1" oninput="this.value=this.value.replace(/\D/g,''); checkAuth()">
+          <button class="btn btn-primary" style="width:96px;height:52px;font-size:14px;" onclick="sendSMS()">인증 요청</button>
+        </div>
+      </div>
+      <div class="field-group" id="sms-field" style="display:none;">
+        <div class="field-label">인증번호</div>
+        <div class="field-row" style="align-items:center;">
+          <input class="field-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="인증번호 6자리" maxlength="6" oninput="this.value=this.value.replace(/\D/g,''); checkAuth()">
+          <span id="sms-timer" style="font-size:13px;color:#FF4B4B;white-space:nowrap;padding-left:10px;">03:00</span>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-area">
+      <button class="btn btn-primary" id="btn-next-2" disabled onclick="go(3)">탈퇴 진행하기</button>
+    </div>
+  </div>
+
+  <!-- Screen 3: 탈퇴 완료 -->
+  <div class="screen" id="screen-3">
+    <div class="topbar">
+      <div style="width:40px"></div>
+      <span class="topbar-title"></span>
+      <div class="topbar-right"></div>
+    </div>
+    <div class="complete-wrap">
+      <div class="complete-graphic">
+        <div class="complete-circle">
+          <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="28" cy="28" r="28" fill="#eeeeff"/>
+            <path d="M16 28.5L23.5 36L40 20" stroke="#3531ff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="complete-badge">👋</div>
+      </div>
+      <h2 class="complete-title">탈퇴가 완료되었습니다</h2>
+      <p class="complete-desc">그동안 렌트리를 이용해주셔서<br>감사드립니다.<br>언제든 다시 찾아주세요.</p>
+      <div class="complete-divider"></div>
+      <div class="complete-info">
+        <div class="complete-info-item">
+          <span>📋</span><span>계정 정보가 모두 삭제되었습니다.</span>
+        </div>
+        <div class="complete-info-item">
+          <span>🔒</span><span>30일 후 동일 정보로 재가입 가능합니다.</span>
+        </div>
+        <div class="complete-info-item">
+          <span>💬</span><span>문의사항은 채널톡으로 연락해주세요.</span>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-area">
+      <button class="btn btn-primary" onclick="go(0)">홈으로 돌아가기</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function go(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + n).classList.add('active');
+  }
+
+  function toggleReason(el) {
+    el.classList.toggle('checked');
+    const guide = el.querySelector('.reason-guide');
+    guide.classList.toggle('hidden', !el.classList.contains('checked'));
+    checkStep1();
+  }
+
+  function toggleConfirm() {
+    const el = document.getElementById('confirm-check');
+    el.classList.toggle('checked');
+    checkStep1();
+  }
+
+  function checkStep1() {
+    const anyChecked = document.querySelectorAll('.reason-item.checked').length > 0;
+    const confirmed = document.getElementById('confirm-check').classList.contains('checked');
+    document.getElementById('btn-next-1').disabled = !(anyChecked && confirmed);
+  }
+
+  function sendSMS() {
+    document.getElementById('sms-field').style.display = 'block';
+    let sec = 180;
+    const timer = document.getElementById('sms-timer');
+    clearInterval(window._smsTimer);
+    window._smsTimer = setInterval(() => {
+      sec--;
+      const m = String(Math.floor(sec/60)).padStart(2,'0');
+      const s = String(sec%60).padStart(2,'0');
+      timer.textContent = m + ':' + s;
+      if(sec <= 0) clearInterval(window._smsTimer);
+    }, 1000);
+  }
+
+  function checkAuth() {
+    const smsVisible = document.getElementById('sms-field').style.display !== 'none';
+    const smsInput = document.querySelector('#sms-field input');
+    const smsFilled = smsVisible && smsInput && smsInput.value.trim().length >= 6;
+    document.getElementById('btn-next-2').disabled = !smsFilled;
+  }
+</script>
+</body>
+</html>
