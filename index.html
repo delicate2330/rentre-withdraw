@@ -350,7 +350,7 @@
 
       <div class="field-group">
         <div class="field-label"><span class="required-dot"></span> 이름</div>
-        <input class="field-input" id="auth-name" type="text" placeholder="이름을 입력해주세요" oninput="this.value=this.value.replace(/[^가-힣]/g,''); checkAuth()">
+        <input class="field-input" id="auth-name" type="text" placeholder="이름을 입력해주세요" oninput="checkAuth()">
       </div>
       <div class="field-group">
         <div class="field-label"><span class="required-dot"></span> 주민등록번호</div>
@@ -425,6 +425,24 @@
 </div>
 
 <script>
+  // 이름 입력: 한글만 허용 (IME 조합 완료 후 필터)
+  (function() {
+    let composing = false;
+    const nameInput = document.getElementById('auth-name');
+    nameInput.addEventListener('compositionstart', () => { composing = true; });
+    nameInput.addEventListener('compositionend', () => {
+      composing = false;
+      nameInput.value = nameInput.value.replace(/[^가-힣\s]/g, '');
+      checkAuth();
+    });
+    nameInput.addEventListener('input', () => {
+      if (!composing) {
+        nameInput.value = nameInput.value.replace(/[^가-힣\s]/g, '');
+        checkAuth();
+      }
+    });
+  })();
+
   function go(n) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-' + n).classList.add('active');
